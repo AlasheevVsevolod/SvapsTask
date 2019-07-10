@@ -14,6 +14,10 @@ namespace SvapsTask
 {
     class Program
     {
+        /// <summary>
+        /// Parse XML file and create 2d representation of given asset
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
             string rootDirPath = $"{Environment.CurrentDirectory}/../../";
@@ -27,6 +31,7 @@ namespace SvapsTask
             assertFileName = Console.ReadLine();
             string assetFilePath = $"{assetsPath}/{assertFileName}.xml";
 
+            //Check if file exists
             if (!File.Exists(assetFilePath))
             {
                 Console.WriteLine("File doesn't exists");
@@ -37,6 +42,7 @@ namespace SvapsTask
             XmlDocument xmlFile = new XmlDocument();
             xmlFile.Load(assetFilePath);
 
+            //Set image size based on attributes of "folding" node
             XmlNode rootNode = xmlFile.SelectSingleNode(XmlNameConsts.FOLDING_NAME);
             imgHeight = Convert.ToInt32(rootNode.Attributes.GetNamedItem(XmlNameConsts.IMG_HEIGHT_NAME).Value);
             imgWidth = Convert.ToInt32(rootNode.Attributes.GetNamedItem(XmlNameConsts.IMG_WIDTH_NAME).Value);
@@ -45,8 +51,10 @@ namespace SvapsTask
             {
                 using (Graphics imgGraphics = Graphics.FromImage(image))
                 {
+                    //Fill image with default pixels
                     imgGraphics.FillRectangle(Brushes.White, 0, 0, imgWidth, imgHeight);
 
+                    //Get values to draw root node
                     panelX = GetIntValueFromXmlAttr(rootNode, XmlNameConsts.ROOT_X_COORDINATE_NAME);
                     panelY = GetIntValueFromXmlAttr(rootNode, XmlNameConsts.ROOT_Y_COORDINATE_NAME);
 
@@ -55,13 +63,14 @@ namespace SvapsTask
                     panelWidth = GetIntValueFromXmlAttr(rootNode, XmlNameConsts.PANEL_WIDTH_NAME);
                     panelOffset = GetIntValueFromXmlAttr(rootNode, XmlNameConsts.HINGE_OFFSET_NAME);
 
+                    //Draw root node
                     DrawPanel(imgGraphics, panelX, panelY, panelHeight, panelWidth, panelOffset);
 
+                    //Create all other nodes recursively
                     CreateChildPanels(imgGraphics, rootNode, panelX, panelY, panelHeight, panelWidth, rotation);
                 }
 
-
-
+                //If image with asset name already exists - delete and create new
                 if (File.Exists($"{representationsPath}/{assertFileName}.jpg"))
                 {
                     File.Delete($"{representationsPath}/{assertFileName}.jpg");
@@ -73,24 +82,47 @@ namespace SvapsTask
             Console.Read();
         }
 
-
+        /// <summary>
+        /// Get integer (as we are working with pixels) from floating number in string
+        /// </summary>
+        /// <param name="node">Node which contains given attribute</param>
+        /// <param name="attrName">Attribute which contains number</param>
+        /// <returns></returns>
         public static int GetIntValueFromXmlAttr(XmlNode node, string attrName)
         {
+            if (node.Attributes.GetNamedItem(attrName) == null)
+            {
+                Console.WriteLine($"Error occured during processing {attrName} attribute in {node.Name} node");
+                throw new NullReferenceException($"{attrName} attribute in {node.Name} node");
+            }
             string attrStrValue = node.Attributes.GetNamedItem(attrName).Value.Split(new char[] { '.' }, 2).First();
             return Convert.ToInt32(attrStrValue);
         }
 
-
+        /// <summary>
+        /// Recursively creating all children of given parent node
+        /// </summary>
+        /// <param name="imgGraphics">Graphic tool used for drawing figures (rectangles)</param>
+        /// <param name="parent">Parent node, whose children we'll draw</param>
+        /// <param name="parentX">X coordinate of parent panel (Is used to calculate X coordinate of children)</param>
+        /// <param name="parentY">Y coordinate of parent panel (Is used to calculate Y coordinate of children)</param>
+        /// <param name="parentHeight">Height of parent panel (Is used to calculate Y coordinate of children)</param>
+        /// <param name="parentWidth">Width of parent panel (Is used to calculate X coordinate of children)</param>
+        /// <param name="rotation">Value, describes if parent panel is rotated</param>
         public static void CreateChildPanels(Graphics imgGraphics, XmlNode parent, int parentX, int parentY, int parentHeight, int parentWidth, int rotation)
         {
-            int panelX = 0, panelY = 0, panelWidth, panelHeight, panelOffset, sideToAttach, unrotatedSide;
+            int panelX, panelY, panelWidth, panelHeight, panelOffset, sideToAttach, unrotatedSide;
 
             foreach (XmlNode childNode in parent.SelectSingleNode(XmlNameConsts.ATTACHED_PANELS_NAME).ChildNodes)
             {
+                //Side of parent panel, where child is attached
                 sideToAttach = GetIntValueFromXmlAttr(childNode, XmlNameConsts.ATTACHED_TO_SIDE_NAME);
+
+                //Normalized side number name
                 unrotatedSide = AddRotationToSide(sideToAttach, rotation);
                 switch (unrotatedSide)
                 {
+                    //Child is attached to the bottom of parent
                     case 0:
                         panelHeight = GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_HEIGHT_NAME);
                         panelWidth = GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_WIDTH_NAME);
@@ -101,6 +133,8 @@ namespace SvapsTask
 
                         DrawPanel(imgGraphics, panelX, panelY, panelHeight, panelWidth, panelOffset);
                         break;
+
+                    //Child is attached to the right side of parent
                     case 1:
                         if (unrotatedSide == 2)
                         {
@@ -119,6 +153,8 @@ namespace SvapsTask
 
                         DrawPanel(imgGraphics, panelX, panelY, panelHeight, panelWidth, 0);
                         break;
+
+                    //Child is attached to the top of parent
                     case 2:
                         panelHeight = GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_HEIGHT_NAME);
                         panelWidth = GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_WIDTH_NAME);
@@ -129,6 +165,8 @@ namespace SvapsTask
 
                         DrawPanel(imgGraphics, panelX, panelY, panelHeight, panelWidth, panelOffset);
                         break;
+
+                    //Child is attached to the left side of parent
                     default:
                         if (unrotatedSide == 2)
                         {
@@ -149,32 +187,74 @@ namespace SvapsTask
                         break;
                 }
 
+                //If current child has its own children, we recursively going through all of them
+                //(according to this child rotation)
                 if (childNode.SelectSingleNode(XmlNameConsts.ATTACHED_PANELS_NAME) != null)
                 {
-                    int tmpRotation = 0;
+                    int newRotation = 0;
                     switch (sideToAttach)
                     {
                         case 0:
-                            tmpRotation += 2;
+                            newRotation += 2;
                             break;
                         case 1:
-                            tmpRotation++;
+                            newRotation++;
                             break;
                         case 2:
                             break;
                         default:
-                            tmpRotation--;
+                            newRotation--;
                             break;
                     }
 
-                    CreateChildPanels(imgGraphics, childNode, panelX, panelY, panelHeight, panelWidth, rotation + tmpRotation);
+                    //(rotation + newRotation) is used to track rotated child of rotated parent
+                    CreateChildPanels(imgGraphics, childNode, panelX, panelY, panelHeight, panelWidth, rotation + newRotation);
                 }
             }
         }
 
-
+        /// <summary>
+        /// Change side number name according to rotation value
+        /// </summary>
+        /// <param name="side">Side number name</param>
+        /// <param name="rotation">Rotation (>0 - clockwise, less than 0 - counter-clockwise, 0 - unchanged)</param>
+        /// <returns>Normalized side number</returns>
         public static int AddRotationToSide(int side, int rotation)
         {
+            /*I have decided to "normalize" panels. What do I mean?
+             *By default number name of sides is, like, "rotating". Lets assume we have root panel.
+             * It'll have sides (from bottom counter-clockwise)
+             *
+             * parent
+             * bot/right/top/left
+             * 0 1 2 3
+             *
+             * When we attaching new panel to the right side of root panel, it'll have sides
+             *
+             * child
+             * bot/right/top/left
+             * 1 2 3 0
+             *
+             * If we'll attach another panel to the child on the right, brand new panel will have
+             * "attachedSide" tag == 2, which is kind of strange for me.
+             *
+             * So I think it'll be easier, if sides wouldn't "rotate". In this case all new panels with
+             * "attachedSide" tag == 2 would be placed on the top of their parents. So we need to
+             * "normalize" side names.
+             * Procedure is simple: we take in account rotating value. If new panel is attached to the
+             * right side (rotation += 1) of its parent, we need to think of this child's sides as
+             * "decreased" version of what they really are. So child from upper example will have following sides
+             *
+             * parent
+             * bot/right/top/left
+             * 0 1 2 3
+             *
+             * child on the right side of parent
+             * bot/right/top/left
+             * 0 1 2 3
+             *
+             * Same logic is for left sides, we get (rotation -= 1) so sides need to be increased
+             */
             if (rotation < 0)
             {
                 for (int i = 0; i > rotation; i--)
@@ -198,9 +278,21 @@ namespace SvapsTask
             return side;
         }
 
-
+        /// <summary>
+        /// Draw panel based on given values
+        /// </summary>
+        /// <param name="imgGraphics">Graphic tool used for drawing figures (rectangles)</param>
+        /// <param name="x">X coordinate of panel (middle of bottom side)</param>
+        /// <param name="y">Y coordinate of panel (bottom side)</param>
+        /// <param name="height">Height of rectangle</param>
+        /// <param name="width">Width of rectangle</param>
+        /// <param name="offset">Offset to change base x coordinate</param>
         public static void DrawPanel(Graphics imgGraphics, int x, int y, int height, int width, int offset)
         {
+            //(x - (width / 2)) is used because default X coordinate is located on the bottom of a panel
+            //(y - height) minus is used because by default image has reversed Y axis and Y coordinate
+            //also located on the bottom of a panel
+            //We draw rectangles from the top left side
             imgGraphics.DrawRectangle(new Pen(Brushes.Black, 3), (x - (width / 2)) + offset, y - height, width, height);
         }
     }
