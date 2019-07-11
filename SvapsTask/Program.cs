@@ -25,7 +25,8 @@ namespace SvapsTask
             string representationsPath = $"{rootDirPath}/representations/";
             string assertFileName;
 
-            int imgHeight, imgWidth, panelX, panelY, panelWidth, panelHeight, panelOffset, rotation = 0;
+            double panelX, panelY, panelWidth, panelHeight, panelOffset;
+            int imgHeight, imgWidth, rotation = 0;
 
             Console.Write("Input name of XML file you need to process: ");
             assertFileName = Console.ReadLine();
@@ -44,8 +45,8 @@ namespace SvapsTask
 
             //Set image size based on attributes of "folding" node
             XmlNode rootNode = xmlFile.SelectSingleNode(XmlNameConsts.FOLDING_NAME);
-            imgHeight = Convert.ToInt32(rootNode.Attributes.GetNamedItem(XmlNameConsts.IMG_HEIGHT_NAME).Value);
-            imgWidth = Convert.ToInt32(rootNode.Attributes.GetNamedItem(XmlNameConsts.IMG_WIDTH_NAME).Value);
+            imgHeight = XmlConverter.GetIntValueFromXmlAttr(rootNode, XmlNameConsts.IMG_HEIGHT_NAME);
+            imgWidth = XmlConverter.GetIntValueFromXmlAttr(rootNode, XmlNameConsts.IMG_WIDTH_NAME);
 
             using (Bitmap image = new Bitmap(imgWidth, imgHeight))
             {
@@ -55,16 +56,16 @@ namespace SvapsTask
                     imgGraphics.FillRectangle(Brushes.White, 0, 0, imgWidth, imgHeight);
 
                     //Get values to draw root node
-                    panelX = XmlConverter.GetIntValueFromXmlAttr(rootNode, XmlNameConsts.ROOT_X_COORDINATE_NAME);
-                    panelY = XmlConverter.GetIntValueFromXmlAttr(rootNode, XmlNameConsts.ROOT_Y_COORDINATE_NAME);
+                    panelX = XmlConverter.GetDoubleValueFromXmlAttr(rootNode, XmlNameConsts.ROOT_X_COORDINATE_NAME);
+                    panelY = XmlConverter.GetDoubleValueFromXmlAttr(rootNode, XmlNameConsts.ROOT_Y_COORDINATE_NAME);
 
                     rootNode = rootNode.SelectSingleNode(XmlNameConsts.PANELS_NAME).SelectSingleNode(XmlNameConsts.ITEM_NAME);
-                    panelHeight = XmlConverter.GetIntValueFromXmlAttr(rootNode, XmlNameConsts.PANEL_HEIGHT_NAME);
-                    panelWidth = XmlConverter.GetIntValueFromXmlAttr(rootNode, XmlNameConsts.PANEL_WIDTH_NAME);
-                    panelOffset = XmlConverter.GetIntValueFromXmlAttr(rootNode, XmlNameConsts.HINGE_OFFSET_NAME);
+                    panelHeight = XmlConverter.GetDoubleValueFromXmlAttr(rootNode, XmlNameConsts.PANEL_HEIGHT_NAME);
+                    panelWidth = XmlConverter.GetDoubleValueFromXmlAttr(rootNode, XmlNameConsts.PANEL_WIDTH_NAME);
+                    panelOffset = XmlConverter.GetDoubleValueFromXmlAttr(rootNode, XmlNameConsts.HINGE_OFFSET_NAME);
 
                     //Draw root node
-                    PanelManager.DrawPanel(imgGraphics, panelX, panelY, panelHeight, panelWidth, panelOffset);
+                    PanelManager.DrawPanel(imgGraphics, panelX + panelOffset, panelY, panelHeight, panelWidth);
 
                     //Create all other nodes recursively
                     PanelManager.CreateChildPanels(imgGraphics, rootNode, panelX, panelY, panelHeight, panelWidth, rotation);

@@ -21,9 +21,10 @@ namespace SvapsTask
         /// <param name="parentHeight">Height of parent panel (Is used to calculate Y coordinate of children)</param>
         /// <param name="parentWidth">Width of parent panel (Is used to calculate X coordinate of children)</param>
         /// <param name="rotation">Value, describes if parent panel is rotated</param>
-        public static void CreateChildPanels(Graphics imgGraphics, XmlNode parent, int parentX, int parentY, int parentHeight, int parentWidth, int rotation)
+        public static void CreateChildPanels(Graphics imgGraphics, XmlNode parent, double parentX, double parentY, double parentHeight, double parentWidth, int rotation)
         {
-            int panelX, panelY, panelWidth, panelHeight, panelOffset, sideToAttach, unrotatedSide;
+            double panelX, panelY, panelWidth, panelHeight, panelOffset;
+            int sideToAttach, unrotatedSide;
 
             foreach (XmlNode childNode in parent.SelectSingleNode(XmlNameConsts.ATTACHED_PANELS_NAME).ChildNodes)
             {
@@ -36,66 +37,66 @@ namespace SvapsTask
                 {
                     //Child is attached to the bottom of parent
                     case 0:
-                        panelHeight = XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_HEIGHT_NAME);
-                        panelWidth = XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_WIDTH_NAME);
-                        panelOffset = -XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.HINGE_OFFSET_NAME);
+                        panelHeight = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.PANEL_HEIGHT_NAME);
+                        panelWidth = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.PANEL_WIDTH_NAME);
+                        panelOffset = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.HINGE_OFFSET_NAME);
 
-                        panelX = parentX;
+                        panelX = parentX - panelOffset;
                         panelY = parentY + panelHeight;
 
-                        DrawPanel(imgGraphics, panelX, panelY, panelHeight, panelWidth, panelOffset);
+                        DrawPanel(imgGraphics, panelX, panelY, panelHeight, panelWidth);
                         break;
 
                     //Child is attached to the right side of parent
                     case 1:
                         if (unrotatedSide == 2)
                         {
-                            panelHeight = XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_HEIGHT_NAME);
-                            panelWidth = XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_WIDTH_NAME);
+                            panelHeight = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.PANEL_HEIGHT_NAME);
+                            panelWidth = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.PANEL_WIDTH_NAME);
                         }
                         else
                         {
-                            panelHeight = XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_WIDTH_NAME);
-                            panelWidth = XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_HEIGHT_NAME);
+                            panelHeight = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.PANEL_WIDTH_NAME);
+                            panelWidth = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.PANEL_HEIGHT_NAME);
                         }
-                        panelOffset = XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.HINGE_OFFSET_NAME);
+                        panelOffset = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.HINGE_OFFSET_NAME);
 
                         panelX = parentX + (parentWidth / 2) + (panelWidth / 2);
-                        panelY = parentY + panelOffset;
+                        panelY = parentY - (parentHeight / 2) + (panelHeight / 2) + panelOffset;
 
-                        DrawPanel(imgGraphics, panelX, panelY, panelHeight, panelWidth, 0);
+                        DrawPanel(imgGraphics, panelX, panelY, panelHeight, panelWidth);
                         break;
 
                     //Child is attached to the top of parent
                     case 2:
-                        panelHeight = XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_HEIGHT_NAME);
-                        panelWidth = XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_WIDTH_NAME);
-                        panelOffset = XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.HINGE_OFFSET_NAME);
+                        panelHeight = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.PANEL_HEIGHT_NAME);
+                        panelWidth = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.PANEL_WIDTH_NAME);
+                        panelOffset = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.HINGE_OFFSET_NAME);
 
-                        panelX = parentX;
+                        panelX = parentX + panelOffset;
                         panelY = parentY - parentHeight;
 
-                        DrawPanel(imgGraphics, panelX, panelY, panelHeight, panelWidth, panelOffset);
+                        DrawPanel(imgGraphics, panelX, panelY, panelHeight, panelWidth);
                         break;
 
                     //Child is attached to the left side of parent
                     default:
                         if (unrotatedSide == 2)
                         {
-                            panelHeight = XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_HEIGHT_NAME);
-                            panelWidth = XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_WIDTH_NAME);
+                            panelHeight = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.PANEL_HEIGHT_NAME);
+                            panelWidth = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.PANEL_WIDTH_NAME);
                         }
                         else
                         {
-                            panelHeight = XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_WIDTH_NAME);
-                            panelWidth = XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.PANEL_HEIGHT_NAME);
+                            panelHeight = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.PANEL_WIDTH_NAME);
+                            panelWidth = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.PANEL_HEIGHT_NAME);
                         }
-                        panelOffset = XmlConverter.GetIntValueFromXmlAttr(childNode, XmlNameConsts.HINGE_OFFSET_NAME);
+                        panelOffset = XmlConverter.GetDoubleValueFromXmlAttr(childNode, XmlNameConsts.HINGE_OFFSET_NAME);
 
                         panelX = parentX - (parentWidth / 2) - (panelWidth / 2);
-                        panelY = parentY - panelOffset;
+                        panelY = parentY - (parentHeight / 2) + (panelHeight / 2) - panelOffset;
 
-                        DrawPanel(imgGraphics, panelX, panelY, panelHeight, panelWidth, 0);
+                        DrawPanel(imgGraphics, panelX, panelY, panelHeight, panelWidth);
                         break;
                 }
 
@@ -198,14 +199,13 @@ namespace SvapsTask
         /// <param name="y">Y coordinate of panel (bottom side)</param>
         /// <param name="height">Height of rectangle</param>
         /// <param name="width">Width of rectangle</param>
-        /// <param name="offset">Offset to change base x coordinate</param>
-        public static void DrawPanel(Graphics imgGraphics, int x, int y, int height, int width, int offset)
+        public static void DrawPanel(Graphics imgGraphics, double x, double y, double height, double width)
         {
             //(x - (width / 2)) is used because default X coordinate is located on the bottom of a panel
             //(y - height) minus is used because by default image has reversed Y axis and Y coordinate
             //also located on the bottom of a panel
             //We draw rectangles from the top left side
-            imgGraphics.DrawRectangle(new Pen(Brushes.Black, 3), (x - (width / 2)) + offset, y - height, width, height);
+            imgGraphics.DrawRectangle(new Pen(Brushes.Black, 1), (float)(x - (width / 2)), (float)(y - height), (float)width, (float)height);
         }
     }
 }
